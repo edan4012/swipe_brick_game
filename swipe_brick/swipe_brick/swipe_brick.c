@@ -32,8 +32,8 @@ int main() {
     int lifes = 5;
 
     // 패들과 공
-    Rectangle paddle = { 700, 800, 150, 20 }; // 좌우위치, 높이, 길이, 두께
-    Vector2 ball = { 800, 450 }; //좌우 상하 위치
+    Rectangle paddle = { SCREEN_WIDTH / 2 - 100, 800, 150, 20 }; // 좌우위치, 높이, 길이, 두께
+    Vector2 ball = {SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2}; //좌우 상하 위치
     Vector2 speed = { 5, -5}; //볼의 좌우상하 속도
     float radius = 10; //공의 사이즈
 
@@ -143,7 +143,7 @@ int main() {
             if (ball.y < radius) speed.y *= -1;
 
             // 바닥
-            if (ball.y > SCREEN_HEIGHT) ball = (Vector2){ 800, 450 }, lifes--;  //공이 바닥을 벗어나면 위치 초기화
+            if (ball.y > SCREEN_HEIGHT) ball = (Vector2){SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2}, lifes--;  //공이 바닥을 벗어나면 위치 초기화
 
 
             // 패들 충돌
