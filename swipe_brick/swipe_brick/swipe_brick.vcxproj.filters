@@ -22,4 +22,9 @@
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup>
+    <Media Include="..\..\..\..\Downloads\hit.mp3">
+      <Filter>소스 파일</Filter>
+    </Media>
+  </ItemGroup>
 </Project>

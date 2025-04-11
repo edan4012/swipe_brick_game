@@ -22,7 +22,8 @@ typedef enum {
     STATE_ENDING
 } GameState;
 
-int ball_speed = 5;
+
+Sound hitSound;
 
 void ResetBlocks(Rectangle blocks[MAX_BLOCKS], bool active[MAX_BLOCKS]) {
     for (int i = 0; i < MAX_BLOCKS; i++) {
@@ -34,6 +35,8 @@ void ResetBlocks(Rectangle blocks[MAX_BLOCKS], bool active[MAX_BLOCKS]) {
 int main() {
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Breakout Game"); //가로 세로 사이즈
     SetTargetFPS(60);
+    InitAudioDevice();
+    hitSound = LoadSound("hit.mp3");
 
     int score = 0;
     int lifes = 5;
@@ -59,6 +62,7 @@ int main() {
     
 
     while (!WindowShouldClose()) {
+
         if (gamestate == STATE_START && IsKeyPressed(KEY_ENTER)) {
             gamestate = STATE_PLAYING;
             score = 0;
@@ -125,6 +129,7 @@ int main() {
             }
         }
         else if (gamestate == STATE_ENDING) {
+            //게임 클리어 화면
             ClearBackground(WHITE);
             DrawText("Congratulation!!!", SCREEN_WIDTH / 2 - 220, SCREEN_HEIGHT / 2 - 50, 60, BLACK);
             DrawText("Press R to go Start Screen", SCREEN_WIDTH / 2 - 180, SCREEN_HEIGHT / 2 + 40, 30, BLACK);
@@ -178,6 +183,7 @@ int main() {
                     active[i] = false;
                     speed.y *= -1;
                     score += 10;
+                    PlaySound(hitSound);
                     break;
                 }
             }
@@ -213,6 +219,8 @@ int main() {
         }
         EndDrawing();
     }
+    UnloadSound(hitSound);
+    CloseAudioDevice();
 
     CloseWindow();
     return 0;
