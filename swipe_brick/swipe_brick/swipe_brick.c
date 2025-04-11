@@ -11,7 +11,7 @@ typedef enum {
 
 typedef enum {
     EASY,
-    NOMAL,
+    NORMAL,
     HARD
 } Difficulty;
 
@@ -22,9 +22,11 @@ typedef enum {
     STATE_ENDING
 } GameState;
 
-
 Sound hitSound;
+Sound gameOverSound;
+Sound clearSound;
 
+//블록 초기화
 void ResetBlocks(Rectangle blocks[MAX_BLOCKS], bool active[MAX_BLOCKS]) {
     for (int i = 0; i < MAX_BLOCKS; i++) {
         blocks[i] = (Rectangle){ 15 + (i % 25) * 63, 50 + (i / 25) * 30, 60, 20 };
@@ -33,36 +35,35 @@ void ResetBlocks(Rectangle blocks[MAX_BLOCKS], bool active[MAX_BLOCKS]) {
 }
 
 int main() {
-    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Breakout Game"); //가로 세로 사이즈
+    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Breakout Game");
     SetTargetFPS(60);
     InitAudioDevice();
-    hitSound = LoadSound("hit.mp3");
+    hitSound = LoadSound("resources/hit.wav");
+    clearSound = LoadSound("resources/clear.wav");
+    gameOverSound = LoadSound("resources/gameover.wav");
 
     int score = 0;
     int lifes = 5;
+    bool gameOverSoundPlayed = false;
+    bool clearSoundPlayed = false;
 
     // 패들과 공
-    Rectangle paddle = { SCREEN_WIDTH / 2 - 100, 800, 150, 20 }; // 좌우위치, 높이, 길이, 두께
-    Vector2 ball = {SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2}; //좌우 상하 위치
-    Vector2 speed = { 5, -5}; //볼의 좌우상하 속도
-    float radius = 10; //공의 사이즈
+    Rectangle paddle = { SCREEN_WIDTH / 2 - 100, 800, 150, 20 };
+    Vector2 ball = { SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 };//좌우 상하 위치
+    Vector2 speed = { 5, -5 };//볼의 좌우상하 속도
+    float radius = 10;//공의 사이즈
 
     // 블록들
     Rectangle blocks[MAX_BLOCKS];
-    Color colors[6] = { RED, ORANGE, YELLOW, GREEN, BLUE, PURPLE }; //블록의 색깔지정
+    Color colors[6] = { RED, ORANGE, YELLOW, GREEN, BLUE, PURPLE };//블록의 색깔지정
     bool active[MAX_BLOCKS] = { 0 };
-    for (int i = 0; i < MAX_BLOCKS; i++) {
-        blocks[i] = (Rectangle){ 15 + (i % 25) * 63, 50 + (i / 25) * 30, 60, 20 }; //블록의 좌표와 크기 지정 x, y, width, height
-        active[i] = true;
-    }
+    ResetBlocks(blocks, active);
 
-    Difficulty difficulty = NOMAL;
+    Difficulty difficulty = NORMAL;
     ControlMode controlMode = CONTROL_KEYBOARD;
     GameState gamestate = STATE_START;
-    
 
     while (!WindowShouldClose()) {
-
         if (gamestate == STATE_START && IsKeyPressed(KEY_ENTER)) {
             gamestate = STATE_PLAYING;
             score = 0;
@@ -70,20 +71,22 @@ int main() {
             ball = (Vector2){ SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 };
             speed = (Vector2){ 5, -5 };
             ResetBlocks(blocks, active);
+            gameOverSoundPlayed = false;
+            clearSoundPlayed = false;
         }
-        if (gamestate == STATE_START) { //게임 시작화면 구성
+        BeginDrawing();
+
+        //게임 시작화면 구성
+        if (gamestate == STATE_START) {
             ClearBackground(RAYWHITE);
             DrawText("Breakout Game", SCREEN_WIDTH / 2 - 200, SCREEN_HEIGHT / 2 - 50, 60, BLACK);
             DrawText("Press SPACE to change Controll", SCREEN_WIDTH / 2 - 150, SCREEN_HEIGHT / 2 + 20, 20, BLACK);
             DrawText("Press TAB to change Difficulty", SCREEN_WIDTH / 2 - 150, SCREEN_HEIGHT / 2 + 50, 20, BLACK);
             DrawText("Press ENTER to Start", SCREEN_WIDTH / 2 - 150, SCREEN_HEIGHT / 2 + 110, 30, BLACK);
-            
+
             //조작방식 전환
             if (IsKeyPressed(KEY_SPACE)) {
-                if (controlMode == CONTROL_KEYBOARD)
-                    controlMode = CONTROL_MOUSE;
-                else
-                    controlMode = CONTROL_KEYBOARD;
+                controlMode = (controlMode == CONTROL_KEYBOARD) ? CONTROL_MOUSE : CONTROL_KEYBOARD;
             }
             if (controlMode == CONTROL_MOUSE)
                 DrawText("Control: Mouse (Press SPACE to switch)", 20, 870, 20, BLACK);
@@ -93,8 +96,8 @@ int main() {
             //난이도 전환
             if (IsKeyPressed(KEY_TAB)) {
                 if (difficulty == EASY)
-                    difficulty = NOMAL;
-                else if (difficulty == NOMAL)
+                    difficulty = NORMAL;
+                else if (difficulty == NORMAL)
                     difficulty = HARD;
                 else
                     difficulty = EASY;
@@ -103,47 +106,64 @@ int main() {
                 DrawText("Difficulty : EASY", 20, 840, 20, BLACK);
                 speed = (Vector2){ 3, -3 };
             }
-            else if (difficulty == NOMAL) {
-                DrawText("Difficulty : NOMAL", 20, 840, 20, BLACK);
+            else if (difficulty == NORMAL) {
+                DrawText("Difficulty : NORMAL", 20, 840, 20, BLACK);
                 speed = (Vector2){ 5, -5 };
             }
             else {
                 DrawText("Difficulty : HARD", 20, 840, 20, BLACK);
                 speed = (Vector2){ 7, -7 };
             }
-
         }
+
+        //게임오버 화면
         else if (gamestate == STATE_GAMEOVER) {
-            //게임오버 화면
             ClearBackground(BLACK);
             DrawText("GAME OVER...", SCREEN_WIDTH / 2 - 180, SCREEN_HEIGHT / 2 - 30, 60, RED);
             DrawText("Press R to go Start Screen", SCREEN_WIDTH / 2 - 150, SCREEN_HEIGHT / 2 + 40, 20, WHITE);
 
-            if (IsKeyPressed(KEY_R)) {
-                gamestate = STATE_START;
-                score = 0;
-                lifes = 5;
-                ball = (Vector2){ SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 };
-                speed = (Vector2){ 5,-5 };
-                ResetBlocks(blocks, active);
+            if (!gameOverSoundPlayed) {
+                PlaySound(gameOverSound);
+                gameOverSoundPlayed = true;
             }
-        }
-        else if (gamestate == STATE_ENDING) {
-            //게임 클리어 화면
-            ClearBackground(WHITE);
-            DrawText("Congratulation!!!", SCREEN_WIDTH / 2 - 220, SCREEN_HEIGHT / 2 - 50, 60, BLACK);
-            DrawText("Press R to go Start Screen", SCREEN_WIDTH / 2 - 180, SCREEN_HEIGHT / 2 + 40, 30, BLACK);
 
             if (IsKeyPressed(KEY_R)) {
                 gamestate = STATE_START;
                 score = 0;
                 lifes = 5;
                 ball = (Vector2){ SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 };
-                speed = (Vector2){ 5,-5 };
+                speed = (Vector2){ 5, -5 };
                 ResetBlocks(blocks, active);
+                StopSound(gameOverSound);
+                gameOverSoundPlayed = false;
             }
         }
+
+        //게임 클리어 화면
+        else if (gamestate == STATE_ENDING) {
+            ClearBackground(WHITE);
+            DrawText("Congratulation!!!", SCREEN_WIDTH / 2 - 220, SCREEN_HEIGHT / 2 - 50, 60, BLACK);
+            DrawText("Press R to go Start Screen", SCREEN_WIDTH / 2 - 180, SCREEN_HEIGHT / 2 + 40, 30, BLACK);
+
+            if (!clearSoundPlayed) {
+                PlaySound(clearSound);
+                clearSoundPlayed = true;
+            }
+
+            if (IsKeyPressed(KEY_R)) {
+                gamestate = STATE_START;
+                score = 0;
+                lifes = 5;
+                ball = (Vector2){ SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 };
+                speed = (Vector2){ 5, -5 };
+                ResetBlocks(blocks, active);
+                StopSound(clearSound);
+                clearSoundPlayed = false;
+            }
+        }
+
         else if (gamestate == STATE_PLAYING) {
+
             //조작방식에 따른 패들의 움직임방식 전환
             if (controlMode == CONTROL_MOUSE) {
                 Vector2 mouse = GetMousePosition();
@@ -153,7 +173,6 @@ int main() {
                 if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A)) paddle.x -= 8;
                 if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D)) paddle.x += 8;
             }
-
 
             //패들이 화면 밖으로 벗어나지 않게
             if (paddle.x < 0) paddle.x = 0;
@@ -168,13 +187,16 @@ int main() {
             if (ball.y < radius) speed.y *= -1;
 
             // 바닥
-            if (ball.y > SCREEN_HEIGHT) ball = (Vector2){SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2}, lifes--;  //공이 바닥을 벗어나면 위치 초기화
-
+            if (ball.y > SCREEN_HEIGHT) {
+                ball = (Vector2){ SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 };
+                lifes--;
+            }
 
             // 패들 충돌
             if (CheckCollisionCircleRec(ball, radius, paddle)) {
                 speed.y *= -1;
                 ball.y = paddle.y - radius;
+                PlaySound(hitSound);
             }
 
             // 블록 충돌
@@ -187,8 +209,9 @@ int main() {
                     break;
                 }
             }
+
+            // 첫 번째 활성화된 블록을 비활성화
             if (IsKeyDown(KEY_L)) {
-                // 첫 번째 활성화된 블록을 비활성화
                 for (int i = 0; i < MAX_BLOCKS; i++) {
                     if (active[i]) {
                         active[i] = false;
@@ -198,30 +221,27 @@ int main() {
                 }
             }
 
-            //점수와 생명 표시
-            DrawText(TextFormat("Score: %d", score), 20, 20, 20, WHITE);
-            DrawText(TextFormat("Lifes: %d", lifes), SCREEN_WIDTH - 100, 20, 20, RED);
-
-            // 그리기
-            BeginDrawing();
             ClearBackground(BLACK);
             DrawRectangleRec(paddle, WHITE);
             DrawCircleV(ball, radius, WHITE);
             for (int i = 0; i < MAX_BLOCKS; i++) {
                 if (active[i]) DrawRectangleRec(blocks[i], colors[i / 25]);
             }
-            if (lifes == -1) {
-                gamestate = STATE_GAMEOVER;
-            }
-            if (score == 1500) {
-                gamestate = STATE_ENDING;
-            }
+
+            DrawText(TextFormat("Score: %d", score), 20, 20, 20, WHITE);
+            DrawText(TextFormat("Lifes: %d", lifes), SCREEN_WIDTH - 100, 20, 20, RED);
+
+            if (lifes < 0) gamestate = STATE_GAMEOVER;
+            if (score >= 1500) gamestate = STATE_ENDING;
         }
+
         EndDrawing();
     }
-    UnloadSound(hitSound);
-    CloseAudioDevice();
 
+    UnloadSound(hitSound);
+    UnloadSound(clearSound);
+    UnloadSound(gameOverSound);
+    CloseAudioDevice();
     CloseWindow();
     return 0;
 }
