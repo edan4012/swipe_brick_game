@@ -1,4 +1,7 @@
 ﻿  swipe_brick.c
-C:\Users\user\source\repos\swipe_brick\swipe_brick\swipe_brick.c(45,37): warning C4244: '초기화 중': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-C:\Users\user\source\repos\swipe_brick\swipe_brick\swipe_brick.c(45,57): warning C4244: '초기화 중': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\user\source\repos\swipe_brick\swipe_brick\swipe_brick.c(29,37): warning C4244: '초기화 중': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\user\source\repos\swipe_brick\swipe_brick\swipe_brick.c(29,57): warning C4244: '초기화 중': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\user\source\repos\swipe_brick\swipe_brick\swipe_brick.c(52,37): warning C4244: '초기화 중': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\user\source\repos\swipe_brick\swipe_brick\swipe_brick.c(52,57): warning C4244: '초기화 중': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+LINK : warning LNK4098: 'MSVCRT' defaultlib가 다른 라이브러리와 충돌합니다. /NODEFAULTLIB:library를 사용하십시오.
   swipe_brick.vcxproj -> C:\Users\user\source\repos\swipe_brick\x64\Debug\swipe_brick.exe
